@@ -455,7 +455,28 @@ async function resolveMerges(placed){
       // an earlier explosion in this same pass may already have cleared part of this group
       g.comp=g.comp.filter(i=>board[i]&&board[i].v===g.v);
       if(g.comp.length<3) continue;
-      let anchor=g.comp.find(i=>anchors.includes(i));
+      const nv = g.v+1;                     // η τιμή που θα προκύψει από την ένωση
+      let anchor;
+
+      /* Προτεραιότητα: γεννάμε το νέο ζάρι σε κελί της ομάδας που ήδη ακουμπάει
+         ζάρι ίδιας τιμής με αυτήν που θα προκύψει, ώστε να χτίζεται η επόμενη ένωση. */
+      if(g.v!==MAGIC){
+        let best=0, cand=[];
+        for(const i of g.comp){
+          const n=neighbors(i).filter(x=>!g.comp.includes(x)&&board[x]&&board[x].v===nv).length;
+          if(n>best){ best=n; cand=[i]; } else if(n===best&&n>0) cand.push(i);
+        }
+        if(cand.length){
+          anchor = cand.find(i=>anchors.includes(i));   // ισοπαλία: εκεί που έπαιξε ο παίκτης
+          if(anchor===undefined){
+            let bi=cand[0],bn=-1;
+            for(const i of cand){ const n=neighbors(i).filter(x=>g.comp.includes(x)).length; if(n>bn){bn=n;bi=i;} }
+            anchor=bi;
+          }
+        }
+      }
+
+      if(anchor===undefined) anchor=g.comp.find(i=>anchors.includes(i));
       if(anchor===undefined){
         let bi=g.comp[0],bn=-1;
         for(const i of g.comp){ const n=neighbors(i).filter(x=>g.comp.includes(x)).length; if(n>bn){bn=n;bi=i;} }
@@ -468,7 +489,6 @@ async function resolveMerges(placed){
 
       if(g.v===MAGIC){ await explode(anchor,g.comp); }
       else{
-        const nv=g.v+1;
         setCell(anchor,nv,false);
         board[anchor].el.classList.add('pop');
         ringAt(anchor, nv===MAGIC);
