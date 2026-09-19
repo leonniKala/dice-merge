@@ -55,35 +55,46 @@ button.ui:disabled{opacity:.35;}
 #dice{position:absolute;inset:var(--gap);pointer-events:none;}
 #fx{position:absolute;inset:var(--gap);pointer-events:none;overflow:visible;}
 
-/* die — fake 3D */
-.die{position:absolute;border-radius:24%;
+/* die — fake 3D. Θέση μέσω transform (δεν προκαλεί επανυπολογισμό διάταξης). */
+.die{position:absolute;left:0;top:0;border-radius:24%;
+  --x:0px; --y:0px;
+  transform:translate3d(var(--x),var(--y),0);
   background:linear-gradient(170deg,var(--c1) 0%,var(--c2) 62%,var(--c3) 100%);
-  box-shadow:0 var(--lip) 0 var(--cdark), 0 calc(var(--lip) + 3px) 8px rgba(0,0,0,.30),
+  box-shadow:0 var(--lip) 0 var(--cdark), 0 calc(var(--lip) + 3px) 5px rgba(0,0,0,.28),
     inset 0 2px 2px rgba(255,255,255,.55), inset 0 -2px 3px rgba(0,0,0,.12);
   display:flex;align-items:center;justify-content:center;
-  transition:left .12s ease, top .12s ease;}
+  transition:transform .12s ease;}
 .die .pips{width:70%;height:70%;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);}
 .die .pips span{display:flex;align-items:center;justify-content:center;}
 .die .pips i{width:78%;aspect-ratio:1/1;border-radius:50%;background:var(--pip);
   box-shadow:0 1px 1px rgba(0,0,0,.25), inset 0 -1px 2px rgba(0,0,0,.18);}
 .die.pop{animation:pop .26s cubic-bezier(.34,1.56,.64,1);}
-@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.32)}100%{transform:scale(1)}}
-.die.suck{transition:left .14s ease-in, top .14s ease-in, transform .14s ease-in, opacity .14s ease-in;
-  transform:scale(.25);opacity:0;}
+@keyframes pop{
+  0%{transform:translate3d(var(--x),var(--y),0) scale(1)}
+  40%{transform:translate3d(var(--x),var(--y),0) scale(1.32)}
+  100%{transform:translate3d(var(--x),var(--y),0) scale(1)}}
+.die.suck{transition:transform .14s ease-in, opacity .14s ease-in;
+  transform:translate3d(var(--x),var(--y),0) scale(.25);opacity:0;}
 .die.spawn{animation:spawn .22s cubic-bezier(.34,1.56,.64,1);}
-@keyframes spawn{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes spawn{
+  from{transform:translate3d(var(--x),var(--y),0) scale(.3);opacity:0}
+  to{transform:translate3d(var(--x),var(--y),0) scale(1);opacity:1}}
 
-.die.magic{background:linear-gradient(170deg,#fff3b0 0%,#ffcf3f 55%,#f0a91c 100%);
+.die.magic{background:linear-gradient(170deg,#fff3b0 0%,#ffcf3f 55%,#f0a91c 100%);}
+/* Η λάμψη είναι ξεχωριστό στρώμα και αναβοσβήνει μόνο με opacity. */
+.die.magic .glow{position:absolute;inset:0;border-radius:24%;pointer-events:none;
+  box-shadow:0 0 18px 3px rgba(255,220,90,.95);
   animation:mglow 1.6s ease-in-out infinite;}
-@keyframes mglow{
-  0%,100%{box-shadow:0 var(--lip) 0 #b97c0d,0 calc(var(--lip)+3px) 8px rgba(0,0,0,.3),0 0 0 rgba(255,214,80,0),inset 0 2px 2px rgba(255,255,255,.6);}
-  50%{box-shadow:0 var(--lip) 0 #b97c0d,0 calc(var(--lip)+3px) 8px rgba(0,0,0,.3),0 0 20px rgba(255,220,90,.95),inset 0 2px 2px rgba(255,255,255,.8);}}
+@keyframes mglow{0%,100%{opacity:0}50%{opacity:1}}
 .die.magic .star{width:66%;height:66%;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3));}
 .die.magic .shine{position:absolute;inset:0;border-radius:24%;overflow:hidden;pointer-events:none;}
-.die.magic .shine::after{content:'';position:absolute;top:-60%;left:-120%;width:60%;height:220%;
+.die.magic .shine::after{content:'';position:absolute;top:-60%;left:0;width:60%;height:220%;
   background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);
-  transform:rotate(18deg);animation:sweep 2.4s linear infinite;}
-@keyframes sweep{0%{left:-120%}55%{left:130%}100%{left:130%}}
+  animation:sweep 2.4s linear infinite;}
+@keyframes sweep{
+  0%{transform:translateX(-200%) rotate(18deg)}
+  55%{transform:translateX(290%) rotate(18deg)}
+  100%{transform:translateX(290%) rotate(18deg)}}
 
 /* fx */
 .ring{position:absolute;border-radius:50%;border:4px solid rgba(255,255,255,.9);
@@ -279,7 +290,7 @@ function makeDie(v,size){
   const el=document.createElement('div');
   el.className='die'+(v===MAGIC?' magic':'');
   styleDie(el,v,size);
-  if(v===MAGIC){ el.innerHTML=STAR+'<div class="shine"></div>'; }
+  if(v===MAGIC){ el.innerHTML=STAR+'<div class="shine"></div><div class="glow"></div>'; }
   else{
     const p=document.createElement('div'); p.className='pips';
     const on=PIP[v]||[4];
@@ -291,7 +302,8 @@ function makeDie(v,size){
 }
 function pos(i){ return {x:(i%N)*(cellSize+gap), y:Math.floor(i/N)*(cellSize+gap)}; }
 function center(i){ const p=pos(i); return {x:p.x+cellSize/2, y:p.y+cellSize/2}; }
-function place(el,i){ const p=pos(i); el.style.left=p.x+'px'; el.style.top=p.y+'px'; }
+function setXY(el,x,y){ el.style.setProperty('--x',x+'px'); el.style.setProperty('--y',y+'px'); }
+function place(el,i){ const p=pos(i); setXY(el,p.x,p.y); }
 function layoutAll(){ for(let i=0;i<N*N;i++){ const c=board[i]; if(!c) continue; styleDie(c.el,c.v,cellSize); place(c.el,i); } }
 function setCell(i,v,anim){
   if(board[i]){ board[i].el.remove(); board[i]=null; }
@@ -330,7 +342,7 @@ function renderPiece(){
   pieceEl.style.height=(h*s+(h-1)*g)+'px';
   piece.cells.forEach(c=>{
     const d=makeDie(c.v,s);
-    d.style.left=(c.dx*(s+g))+'px'; d.style.top=(c.dy*(s+g))+'px';
+    setXY(d, c.dx*(s+g), c.dy*(s+g));
     pieceEl.appendChild(d);
   });
 }
@@ -349,7 +361,7 @@ function startDrag(e){
   dragEl.innerHTML=''; dragEl.style.display='block';
   piece.cells.forEach(c=>{
     const d=makeDie(c.v,cellSize);
-    d.style.left=(c.dx*(cellSize+gap))+'px'; d.style.top=(c.dy*(cellSize+gap))+'px';
+    setXY(d, c.dx*(cellSize+gap), c.dy*(cellSize+gap));
     dragEl.appendChild(d);
   });
   drag={grabbed,sx:e.clientX,sy:e.clientY,moved:false};
@@ -450,7 +462,7 @@ async function resolveMerges(placed){
         anchor=bi;
       }
       const ap=pos(anchor);
-      g.comp.forEach(i=>{ if(i!==anchor){ const el=board[i].el; el.style.left=ap.x+'px'; el.style.top=ap.y+'px'; el.classList.add('suck'); } });
+      g.comp.forEach(i=>{ if(i!==anchor){ const el=board[i].el; setXY(el,ap.x,ap.y); el.classList.add('suck'); } });
       await sleep(150);
       g.comp.forEach(i=>{ if(i!==anchor){ board[i].el.remove(); board[i]=null; } });
 
