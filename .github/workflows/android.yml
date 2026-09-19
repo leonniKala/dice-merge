@@ -36,6 +36,12 @@ jobs:
       - name: Δημιουργία Android project
         run: npx cap add android
 
+      - name: Απενεργοποίηση force-dark του Android
+        run: |
+          f=android/app/src/main/res/values/styles.xml
+          sed -i 's#</style>#    <item name="android:forceDarkAllowed">false</item>\n</style>#g' "$f"
+          cat "$f"
+
       - name: Εικονίδια και splash screen
         run: npx @capacitor/assets generate --android
 
