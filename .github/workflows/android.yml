@@ -17,14 +17,18 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
 
-      - uses: android-actions/setup-android@v3
+      - name: Έλεγχος ότι υπάρχουν τα αρχεία
+        run: |
+          ls -la
+          test -f docs/index.html || { echo "ΛΕΙΠΕΙ το docs/index.html"; exit 1; }
+          test -f resources/icon.png || { echo "ΛΕΙΠΕΙ το resources/icon.png"; exit 1; }
 
       - name: Εγκατάσταση εξαρτήσεων
         run: npm install
