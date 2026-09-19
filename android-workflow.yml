@@ -1,0 +1,66 @@
+name: Build APK
+
+# Τρέχει σε κάθε ανέβασμα στο main, ή χειροκίνητα από την καρτέλα Actions.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Εγκατάσταση εξαρτήσεων
+        run: npm install
+
+      - name: Δημιουργία Android project
+        run: npx cap add android
+
+      - name: Εικονίδια και splash screen
+        run: npx @capacitor/assets generate --android
+
+      - name: Αντιγραφή του παιχνιδιού στο project
+        run: npx cap sync android
+
+      - name: Χτίσιμο APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Μετονομασία
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk dice-merge.apk
+
+      # Το APK ως artifact (χρειάζεται σύνδεση στο GitHub για κατέβασμα)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dice-merge-apk
+          path: dice-merge.apk
+
+      # ...και ως Release, με σταθερό δημόσιο link για κατέβασμα από το κινητό
+      - name: Δημοσίευση έκδοσης
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Τελευταία έκδοση
+          body: |
+            Αυτόματο build από το commit ${{ github.sha }}.
+            Κατέβασε το `dice-merge.apk` παρακάτω και άνοιξέ το στο κινητό.
+          files: dice-merge.apk
+          make_latest: true

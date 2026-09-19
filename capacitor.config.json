@@ -1,0 +1,15 @@
+{
+  "appId": "com.leonni.dicemerge",
+  "appName": "Dice Merge",
+  "webDir": "docs",
+  "android": {
+    "backgroundColor": "#1f8a4c"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 800,
+      "backgroundColor": "#1f8a4c",
+      "androidScaleType": "CENTER_CROP"
+    }
+  }
+}

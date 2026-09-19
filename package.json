@@ -1,0 +1,14 @@
+{
+  "name": "dice-merge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dice Merge puzzle",
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/assets": "^3.0.5"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/android": "^7.0.0"
+  }
+}
