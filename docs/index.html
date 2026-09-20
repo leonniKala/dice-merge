@@ -321,7 +321,7 @@ function randVal(){
   return 1;
 }
 function newPiece(){
-  const single=Math.random()<0.38;
+  const single=Math.random()<0.15;   // 15% μονό ζάρι, 85% ζευγάρι
   if(single) return {cells:[{dx:0,dy:0,v:randVal()}]};
   const vertical=Math.random()<0.5, same=Math.random()<0.45, v0=randVal();
   const shape=vertical?[[0,0],[0,1]]:[[0,0],[1,0]];
